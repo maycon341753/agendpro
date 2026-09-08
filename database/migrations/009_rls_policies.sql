@@ -39,12 +39,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
+-- Funcao helper para obter email do usuario logado (lê auth.users.email com SECURITY DEFINER,
+-- ja que public.profiles NAO tem coluna email - email fica na tabela nativa auth.users do Supabase)
+CREATE OR REPLACE FUNCTION public.auth_email()
+RETURNS TEXT AS $$
+BEGIN
+  RETURN (
+    SELECT email::TEXT
+    FROM auth.users
+    WHERE id = auth.uid()
+    LIMIT 1
+  );
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+
 CREATE OR REPLACE FUNCTION public.audit_trigger_func()
 RETURNS TRIGGER AS $$
 DECLARE
   old_data JSONB;
   new_data JSONB;
   action_text TEXT;
+  company_uuid UUID;
+  entity_id_val UUID;
 BEGIN
   IF (TG_OP = 'INSERT') THEN
     action_text := 'INSERT';
@@ -62,26 +78,40 @@ BEGIN
     RETURN NULL;
   END IF;
 
+  -- REGRA company_id (trata companies separado pois ela NAO TEM company_id — id = company_id)
+  IF TG_ARGV[0] = 'companies' THEN
+    IF TG_OP = 'INSERT' THEN
+      company_uuid := NEW.id;
+    ELSIF TG_OP = 'UPDATE' THEN
+      company_uuid := COALESCE(NEW.id, OLD.id);
+    ELSE -- DELETE
+      company_uuid := OLD.id;
+    END IF;
+  ELSE
+    IF TG_OP = 'INSERT' THEN
+      company_uuid := NEW.company_id;
+    ELSIF TG_OP = 'UPDATE' THEN
+      company_uuid := COALESCE(NEW.company_id, OLD.company_id);
+    ELSE -- DELETE
+      company_uuid := OLD.company_id;
+    END IF;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    entity_id_val := OLD.id;
+  ELSE
+    entity_id_val := NEW.id;
+  END IF;
+
   INSERT INTO public.audit_logs (
-    company_id,
-    user_id,
-    action,
-    entity,
-    entity_id,
-    old_data,
-    new_data,
-    ip_address,
-    user_agent,
-    created_at
+    company_id, user_id, action, entity, entity_id, old_data, new_data,
+    ip_address, user_agent, created_at
   ) VALUES (
-    CASE
-      WHEN TG_ARGV[0] = 'companies' THEN OLD.id
-      ELSE COALESCE(NEW.company_id, OLD.company_id)
-    END,
+    company_uuid,
     auth.uid(),
     action_text,
     TG_ARGV[0],
-    COALESCE(NEW.id, OLD.id),
+    entity_id_val,
     old_data,
     new_data,
     inet_client_addr()::TEXT,
@@ -417,7 +447,7 @@ CREATE POLICY clients_select_self ON public.clients
         AND (
           p.phone = clients.phone
           OR p.whatsapp = clients.whatsapp
-          OR p.email = clients.email::TEXT
+          OR public.auth_email() = clients.email::TEXT
         )
     )
   );
@@ -542,7 +572,7 @@ CREATE POLICY appointments_select_client ON public.appointments
       JOIN public.profiles p ON (
         p.phone = c.phone
         OR p.whatsapp = c.whatsapp
-        OR p.email = c.email::TEXT
+        OR public.auth_email() = c.email::TEXT
       )
       WHERE c.id = appointments.client_id
         AND p.id = auth.uid()
