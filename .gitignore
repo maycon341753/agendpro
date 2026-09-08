@@ -5,6 +5,7 @@
 
 # Next.js build
 /.next/
+/.next-cache/
 /out/
 
 # Produção
