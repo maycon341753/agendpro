@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { Scissors, Plus, Search, Pencil, Archive, Restore, FolderOpen } from "lucide-react";
+import { Scissors, Plus, Search, Pencil, Archive, RotateCcw, FolderOpen } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -234,7 +234,7 @@ export default function ServicosPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            icon={s.status === "active" ? <Archive className="h-4 w-4" /> : <Restore className="h-4 w-4" />}
+                            icon={s.status === "active" ? <Archive className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
                             onClick={() => handleToggleStatus(s)}
                             title={s.status === "active" ? "Inativar" : "Ativar"}
                             className={s.status === "active" ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"}

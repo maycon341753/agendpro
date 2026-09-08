@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   CalendarPlus,
   Plus,
-  ShuffleUsers,
+  Users,
   Mail,
   FileText,
   Lock,
@@ -591,7 +591,7 @@ export default function AgendarPage({ company }) {
                         className="h-14 w-14 rounded-full flex items-center justify-center shrink-0"
                         style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
                       >
-                        <ShuffleUsers className="h-7 w-7" />
+                        <Users className="h-7 w-7" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-slate-900">

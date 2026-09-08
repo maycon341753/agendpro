@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { Users, Plus, Search, Pencil, Archive, Restore, FolderOpen, Phone, Mail, Percent } from "lucide-react";
+import { Users, Plus, Search, Pencil, Archive, RotateCcw, FolderOpen, Phone, Mail, Percent } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -242,7 +242,7 @@ export default function ProfissionaisPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            icon={p.status === "active" ? <Archive className="h-4 w-4" /> : <Restore className="h-4 w-4" />}
+                            icon={p.status === "active" ? <Archive className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
                             onClick={() => handleToggleStatus(p)}
                             title={p.status === "active" ? "Inativar" : "Ativar"}
                             className={p.status === "active" ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-green-600 hover:text-green-700 hover:bg-green-50"}
