@@ -66,7 +66,7 @@
 #  Build Command     : next build     (já configurado em vercel.json)
 #  Install Command   : npm install    (automático)
 #  Output Directory  : .next          (automático — Next.js)
-#  Regions           : sao1           (São Paulo, Brasil — mais rápido!)
+#  Regions           : gru1           (São Paulo, Brasil — mais rápido!)
 #
 #  Todos os valores acima são AUTOMATICOS graças aos arquivos:
 #    - vercel.json (configurações Vercel)
