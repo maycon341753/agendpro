@@ -93,7 +93,30 @@ const CUSTOM_SHIMS = {
     "package.json": makePackageJson("braces", "3.0.3", { dependencies: { "fill-range": "^7.1.1" }, engines: { node: ">=8" } }),
     "index.js":
       "'use strict';\n" +
-      "var fillRange = require('fill-range');\n" +
+      "var fillRange;\n" +
+      "try { fillRange = require('fill-range'); } catch (e) {\n" +
+      "  fillRange = function fillRange(min, max, step, options) {\n" +
+      "    if (arguments.length <= 1) return [];\n" +
+      "    if (typeof step === 'object') { options = step; step = void 0; }\n" +
+      "    if (step === void 0) step = 1;\n" +
+      "    options = options || {};\n" +
+      "    if (typeof min === 'number' && typeof max === 'number') {\n" +
+      "      if (options.toRegex) return '(' + min + '|' + max + ')';\n" +
+      "      var arr = [];\n" +
+      "      if (min > max) { for (var i = min; i >= max; i -= step) arr.push(i); }\n" +
+      "      else { for (var j = min; j <= max; j += step) arr.push(j); }\n" +
+      "      return arr;\n" +
+      "    }\n" +
+      "    if (typeof min === 'string' && typeof max === 'string') {\n" +
+      "      if (options.toRegex) return '(' + min + '|' + max + ')';\n" +
+      "      var s = min.charCodeAt(0), e = max.charCodeAt(0), sArr = [];\n" +
+      "      if (s > e) { for (var a = s; a >= e; a -= step) sArr.push(String.fromCharCode(a)); }\n" +
+      "      else { for (var b = s; b <= e; b += step) sArr.push(String.fromCharCode(b)); }\n" +
+      "      return sArr;\n" +
+      "    }\n" +
+      "    return [];\n" +
+      "  };\n" +
+      "}\n" +
       "function braces(input, options) {\n" +
       "  options = options || {};\n" +
       "  if (typeof input !== 'string') return [];\n" +
@@ -107,8 +130,24 @@ const CUSTOM_SHIMS = {
       "  } catch (e) {}\n" +
       "  return [input];\n" +
       "}\n" +
-      "braces.expand = braces; braces.compile = function (i) { return typeof i === 'string' ? i : ''; };\n" +
-      "module.exports = braces;\n",
+      "braces.expand = braces;\n" +
+      "braces.compile = function (input) { return typeof input === 'string' ? input : ''; };\n" +
+      "braces.makeRe = function makeRe(input) {\n" +
+      "  try {\n" +
+      "    var expanded = braces.expand(input, { expand: false });\n" +
+      "    if (Array.isArray(expanded) && expanded.length > 0) {\n" +
+      "      var joined = expanded.map(function (x) { return (x || '').replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*').replace(/\\?/g, '.'); }).join('|');\n" +
+      "      return new RegExp('^(' + joined + ')$');\n" +
+      "    }\n" +
+      "  } catch (e) {}\n" +
+      "  return /^.*$/;\n" +
+      "};\n" +
+      "braces.list = function list(input, options) { try { return braces.expand(input, options); } catch (e) { return [input]; } };\n" +
+      "braces.snapdragon = function snapdragon() { return {}; };\n" +
+      "braces.braces = braces;\n" +
+      "braces.default = braces;\n" +
+      "module.exports = braces;\n" +
+      "module.exports.default = braces;\n",
   },
   picomatch: {
     "package.json": makePackageJson("picomatch", "2.3.1", { engines: { node: ">=8.6" } }),
@@ -129,19 +168,55 @@ const CUSTOM_SHIMS = {
       "  match.test = match;\n" +
       "  return match;\n" +
       "}\n" +
+      "picomatch.matcher = picomatch;\n" +
       "picomatch.test = function (input, glob, options) { try { return picomatch(glob, options)(input); } catch (e) { return true; } };\n" +
-      "picomatch.matchBase = function (b, g, o) { try { return picomatch(g, o)(b); } catch (e) { return true; } };\n" +
+      "picomatch.matchBase = function (basename, glob, options) { try { return picomatch(glob, options)(basename); } catch (e) { return true; } };\n" +
       "picomatch.isMatch = picomatch.test;\n" +
+      "picomatch.makeRe = function makeRe(pattern, options) {\n" +
+      "  try {\n" +
+      "    if (typeof pattern === 'string') {\n" +
+      "      var esc = pattern.replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*').replace(/\\?/g, '.');\n" +
+      "      return new RegExp('^' + esc + '$');\n" +
+      "    }\n" +
+      "  } catch (e) {}\n" +
+      "  return /^.*$/;\n" +
+      "};\n" +
+      "picomatch.toRegex = picomatch.makeRe;\n" +
       "picomatch.parse = function () { return {}; };\n" +
       "picomatch.scan = function () { return {}; };\n" +
-      "module.exports = picomatch;\n",
+      "picomatch.default = picomatch;\n" +
+      "module.exports = picomatch;\n" +
+      "module.exports.default = picomatch;\n",
   },
   micromatch: {
     "package.json": makePackageJson("micromatch", "4.0.7", { dependencies: { braces: "^3.0.3", picomatch: "^2.3.1" }, engines: { node: ">=8.6" } }),
     "index.js":
       "'use strict';\n" +
-      "var picomatch = require('picomatch');\n" +
-      "var braces = require('braces');\n" +
+      "var picomatch;\n" +
+      "var braces;\n" +
+      "try { picomatch = require('picomatch'); } catch (e) {\n" +
+      "  picomatch = function (glob, options) {\n" +
+      "    function match(str) { if (typeof str !== 'string') return false; if (glob === '*' || glob === '**') return true; try { var esc = (glob || '').replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*').replace(/\\?/g, '.'); return new RegExp('^' + esc + '$').test(str); } catch (err) { return true; } }\n" +
+      "    match.test = match; return match;\n" +
+      "  };\n" +
+      "  picomatch.matcher = picomatch;\n" +
+      "  picomatch.makeRe = function () { return /^.*$/; };\n" +
+      "  picomatch.test = function (s, g, o) { try { return picomatch(g, o)(s); } catch (e) { return true; } };\n" +
+      "  picomatch.matchBase = function (b, g, o) { try { return picomatch(g, o)(b); } catch (e) { return true; } };\n" +
+      "  picomatch.isMatch = picomatch.test;\n" +
+      "  picomatch.parse = function () { return {}; };\n" +
+      "  picomatch.scan = function () { return {}; };\n" +
+      "  picomatch.toRegex = function () { return /^.*$/; };\n" +
+      "}\n" +
+      "try { braces = require('braces'); } catch (e) {\n" +
+      "  braces = function (input, options) {\n" +
+      "    options = options || {}; if (typeof input !== 'string') return [];\n" +
+      "    if (/\\.\\./.test(input)) { try { var fillRange; try { fillRange = require('fill-range'); } catch (ee) { fillRange = function (a, b) { return [a, b]; }; } var parts = input.split('..'); if (parts.length >= 2) return fillRange(parts[0], parts[1].split(/[{}]/)[0]); } catch (err) { return [input]; } }\n" +
+      "    try { var matches = input.match(/\\{([^{}]+)\\}/); if (matches) return matches[1].split(',').map(function (it) { return input.replace(matches[0], it); }); } catch (err) {}\n" +
+      "    return [input];\n" +
+      "  };\n" +
+      "  braces.expand = braces; braces.compile = function (i) { return typeof i === 'string' ? i : ''; }; braces.makeRe = function () { return /^.*$/; }; braces.list = function (i) { return [i]; }; braces.snapdragon = function () { return {}; };\n" +
+      "}\n" +
       "function micromatch(list, patterns, options) {\n" +
       "  if (!Array.isArray(list)) list = [list];\n" +
       "  if (!Array.isArray(patterns)) patterns = [patterns];\n" +
@@ -151,6 +226,13 @@ const CUSTOM_SHIMS = {
       "    });\n" +
       "  } catch (e) { return list; }\n" +
       "}\n" +
+      "micromatch.matcher = function matcher(pattern, options) {\n" +
+      "  try { return picomatch(pattern, options); } catch (e) {\n" +
+      "    function matchFallback(str) { return typeof str === 'string'; }\n" +
+      "    matchFallback.test = matchFallback;\n" +
+      "    return matchFallback;\n" +
+      "  }\n" +
+      "};\n" +
       "micromatch.isMatch = function (str, pattern, options) { try { return picomatch(pattern, options)(str); } catch (e) { return true; } };\n" +
       "micromatch.not = function (list, patterns, options) {\n" +
       "  if (!Array.isArray(list)) list = [list]; if (!Array.isArray(patterns)) patterns = [patterns];\n" +
@@ -160,10 +242,62 @@ const CUSTOM_SHIMS = {
       "};\n" +
       "micromatch.contains = micromatch.isMatch;\n" +
       "micromatch.match = micromatch;\n" +
-      "micromatch.scan = function () { return {}; };\n" +
+      "micromatch.all = function (list, patterns, options) { return micromatch(list, patterns, options); };\n" +
+      "micromatch.filter = function (pattern, options) {\n" +
+      "  var fn = micromatch.matcher(pattern, options);\n" +
+      "  return function (str) { return fn(str); };\n" +
+      "};\n" +
+      "micromatch.some = function (list, patterns, options) {\n" +
+      "  if (!Array.isArray(list)) list = [list];\n" +
+      "  if (!Array.isArray(patterns)) patterns = [patterns];\n" +
+      "  try { return list.some(function (item) { return patterns.some(function (p) { try { return picomatch(p, options)(item); } catch (e) { return true; } }); }); } catch (e) { return true; }\n" +
+      "};\n" +
+      "micromatch.every = function (list, patterns, options) {\n" +
+      "  if (!Array.isArray(list)) list = [list];\n" +
+      "  if (!Array.isArray(patterns)) patterns = [patterns];\n" +
+      "  try { return list.every(function (item) { return patterns.some(function (p) { try { return picomatch(p, options)(item); } catch (e) { return true; } }); }); } catch (e) { return true; }\n" +
+      "};\n" +
+      "micromatch.any = function (list, patterns, options) { return micromatch.some(list, patterns, options); };\n" +
+      "micromatch.matchKeys = function (obj, patterns, options) {\n" +
+      "  if (!obj || typeof obj !== 'object') return {};\n" +
+      "  var keys = Object.keys(obj);\n" +
+      "  var matched = micromatch(keys, patterns, options);\n" +
+      "  var result = {};\n" +
+      "  for (var i = 0; i < matched.length; i++) { result[matched[i]] = obj[matched[i]]; }\n" +
+      "  return result;\n" +
+      "};\n" +
+      "micromatch.capture = function capture(pattern, string, options) {\n" +
+      "  var result = []; try {\n" +
+      "    var fn = picomatch(pattern, Object.assign({}, options || {}, { capture: true }));\n" +
+      "    if (typeof fn === 'function') return fn(string) || [];\n" +
+      "  } catch (e) {}\n" +
+      "  return result;\n" +
+      "};\n" +
+      "micromatch.makeRe = function makeRe(pattern, options) {\n" +
+      "  try {\n" +
+      "    if (typeof pattern === 'string') {\n" +
+      "      var esc = pattern.replace(/[.+^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*').replace(/\\?/g, '.');\n" +
+      "      return new RegExp('^' + esc + '$');\n" +
+      "    }\n" +
+      "  } catch (e) {}\n" +
+      "  return /^.*$/;\n" +
+      "};\n" +
+      "micromatch.expand = function expand(pattern, options) {\n" +
+      "  try { if (braces && typeof braces.expand === 'function') return braces.expand(pattern, options); } catch (e) {}\n" +
+      "  return [pattern];\n" +
+      "};\n" +
+      "micromatch.list = function list(str, options) {\n" +
+      "  try { if (braces && typeof braces.list === 'function') return braces.list(str, options); } catch (e) {}\n" +
+      "  return [str];\n" +
+      "};\n" +
+      "micromatch.array = function array(arr, patterns, options) { return micromatch(arr, patterns, options); };\n" +
+      "micromatch.parse = function parse() { return {}; };\n" +
+      "micromatch.scan = function scan() { return {}; };\n" +
       "micromatch.braces = braces;\n" +
       "micromatch.picomatch = picomatch;\n" +
-      "module.exports = micromatch;\n",
+      "micromatch.default = micromatch;\n" +
+      "module.exports = micromatch;\n" +
+      "module.exports.default = micromatch;\n",
   },
   "node-exports-info": {
     "package.json": makePackageJson("node-exports-info", "1.2.3"),
