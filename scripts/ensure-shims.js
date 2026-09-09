@@ -362,9 +362,22 @@ const CUSTOM_SHIMS = {
       "  return new Readable({ objectMode: true, read: function () { this.push(null); } });\n" +
       "};\n" +
       "fastGlob.generate = function () { return []; };\n" +
+      "fastGlob.generateTasks = function (patterns, options) {\n" +
+      "  if (!patterns) return []; if (!Array.isArray(patterns)) patterns = [patterns]; options = options || {};\n" +
+      "  var tasks = []; var positive = []; var negative = [];\n" +
+      "  for (var i = 0; i < patterns.length; i++) { var p = patterns[i]; if (typeof p !== 'string') continue; if (p[0] === '!') negative.push(p.slice(1)); else positive.push(p); }\n" +
+      "  if (positive.length === 0 && patterns.length > 0) { positive.push('**/*'); }\n" +
+      "  for (var j = 0; j < positive.length; j++) {\n" +
+      "    tasks.push({ pattern: positive[j], patterns: [positive[j]], negative: negative.slice(), options: Object.assign({}, options, { cwd: options.cwd || process.cwd() }), base: options.cwd || process.cwd(), dynamic: true });\n" +
+      "  }\n" +
+      "  return tasks;\n" +
+      "};\n" +
+      "fastGlob.isDynamicPattern = function (pattern, options) { if (typeof pattern !== 'string') return false; return /[*?{[\\]()]/.test(pattern); };\n" +
+      "fastGlob.isStaticPattern = function (pattern, options) { return !fastGlob.isDynamicPattern(pattern, options); };\n" +
       "fastGlob.escapePath = function (p) { return String(p || ''); };\n" +
       "fastGlob.default = fastGlob;\n" +
-      "module.exports = fastGlob; module.exports.default = fastGlob; module.exports.sync = fastGlobSync; module.exports.async = fastGlob;\n",
+      "module.exports = fastGlob; module.exports.default = fastGlob; module.exports.sync = fastGlobSync; module.exports.async = fastGlob;\n" +
+      "module.exports.generateTasks = fastGlob.generateTasks; module.exports.isDynamicPattern = fastGlob.isDynamicPattern; module.exports.isStaticPattern = fastGlob.isStaticPattern;\n",
   },
   "glob-parent": {
     "package.json": makePackageJson("glob-parent", "6.0.2", { engines: { node: ">=10.13.0" } }),
