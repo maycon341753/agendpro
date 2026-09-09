@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 
+const path = require("path");
+
 const securityHeaders = [
   {
     key: "X-Frame-Options",
@@ -42,6 +44,13 @@ const nextConfig = {
         hostname: "**",
       },
     ],
+  },
+
+  webpack: (config) => {
+    config.resolve.alias = config.resolve.alias || {};
+    config.resolve.alias["client-only"] = path.resolve(__dirname, "shims/client-only/index.js");
+    config.resolve.alias["server-only"] = path.resolve(__dirname, "shims/server-only/index.js");
+    return config;
   },
 
   async headers() {
