@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
   const [initialized, setInitialized] = useState(false);
 
   const getProfile = useCallback(async (userId) => {
-    if (!userId) return null;
+    if (!userId || !supabase) return null;
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const getUserCompanies = useCallback(async (userId) => {
-    if (!userId) return [];
+    if (!userId || !supabase) return [];
     try {
       const { data, error } = await supabase
         .from("company_users")
@@ -67,6 +67,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loadSession = useCallback(async () => {
+    if (!supabase) {
+      setLoading(false);
+      setInitialized(true);
+      return;
+    }
     try {
       setLoading(true);
       const {
@@ -99,35 +104,47 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     loadSession();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        setUser(session.user);
-        const [profileData, companiesData] = await Promise.all([
-          getProfile(session.user.id),
-          getUserCompanies(session.user.id),
-        ]);
-        setProfile(profileData);
-        setCompanies(companiesData);
-        if (companiesData.length > 0) {
-          setCompany(companiesData[0]);
+    if (!supabase) return;
+    let subscription = null;
+    try {
+      const {
+        data: { subscription: sub },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === "SIGNED_IN" && session?.user) {
+          setUser(session.user);
+          const [profileData, companiesData] = await Promise.all([
+            getProfile(session.user.id),
+            getUserCompanies(session.user.id),
+          ]);
+          setProfile(profileData);
+          setCompanies(companiesData);
+          if (companiesData.length > 0) {
+            setCompany(companiesData[0]);
+          }
+        } else if (event === "SIGNED_OUT") {
+          setUser(null);
+          setProfile(null);
+          setCompanies([]);
+          setCompany(null);
+        } else if (event === "USER_UPDATED" && session?.user) {
+          setUser(session.user);
+          const profileData = await getProfile(session.user.id);
+          setProfile(profileData);
         }
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        setProfile(null);
-        setCompanies([]);
-        setCompany(null);
-      } else if (event === "USER_UPDATED" && session?.user) {
-        setUser(session.user);
-        const profileData = await getProfile(session.user.id);
-        setProfile(profileData);
+      });
+      subscription = sub;
+    } catch (err) {
+      console.error("Erro ao registrar onAuthStateChange:", err);
+    }
+    return () => {
+      if (subscription && typeof subscription.unsubscribe === "function") {
+        try { subscription.unsubscribe(); } catch (_) {}
       }
-    });
-    return () => subscription.unsubscribe();
+    };
   }, [loadSession, getProfile, getUserCompanies]);
 
   const signInWithPassword = async (email, password) => {
+    if (!supabase) throw new Error("Supabase não configurado.");
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -137,6 +154,7 @@ export function AuthProvider({ children }) {
   };
 
   const signUp = async (email, password, options = {}) => {
+    if (!supabase) throw new Error("Supabase não configurado.");
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -150,8 +168,10 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (supabase) {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    }
     setUser(null);
     setProfile(null);
     setCompanies([]);
@@ -159,6 +179,7 @@ export function AuthProvider({ children }) {
   };
 
   const resetPasswordForEmail = async (email) => {
+    if (!supabase) throw new Error("Supabase não configurado.");
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8080"}/alterar-senha`,
     });
@@ -167,6 +188,7 @@ export function AuthProvider({ children }) {
   };
 
   const updatePassword = async (newPassword) => {
+    if (!supabase) throw new Error("Supabase não configurado.");
     const { data, error } = await supabase.auth.updateUser({
       password: newPassword,
     });
@@ -176,6 +198,7 @@ export function AuthProvider({ children }) {
 
   const updateProfile = async (updates) => {
     if (!user) throw new Error("Usuário não autenticado");
+    if (!supabase) throw new Error("Supabase não configurado.");
     const { data, error } = await supabase
       .from("profiles")
       .update(updates)
