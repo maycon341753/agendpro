@@ -1,0 +1,7 @@
+{
+  "name": "picomatch",
+  "version": "2.3.1",
+  "description": "Shim picomatch",
+  "main": "index.js",
+  "license": "MIT"
+}

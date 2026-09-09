@@ -1,0 +1,7 @@
+{
+  "name": "callsites",
+  "version": "3.1.0",
+  "description": "Shim callsites for ESLint",
+  "main": "index.js",
+  "license": "MIT"
+}

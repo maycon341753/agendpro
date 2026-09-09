@@ -1,0 +1,7 @@
+{
+  "name": "node-exports-info",
+  "version": "1.2.3",
+  "description": "Shim node-exports-info for ESLint plugin-react",
+  "main": "index.js",
+  "license": "MIT"
+}

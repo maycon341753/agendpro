@@ -1,0 +1,8 @@
+{
+  "name": "to-regex-range",
+  "version": "5.0.1",
+  "description": "Shim to-regex-range",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": { "is-number": "^7.0.0" }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "micromatch",
+  "version": "4.0.7",
+  "description": "Shim micromatch",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": { "braces": "^3.0.3", "picomatch": "^2.3.1" }
+}

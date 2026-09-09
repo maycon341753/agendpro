@@ -1,0 +1,8 @@
+{
+  "name": "fill-range",
+  "version": "7.1.1",
+  "description": "Shim fill-range",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": { "to-regex-range": "^5.0.1" }
+}

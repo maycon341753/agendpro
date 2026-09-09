@@ -1,0 +1,7 @@
+{
+  "name": "is-number",
+  "version": "7.0.0",
+  "description": "Shim is-number for fast-glob/Tailwind (web-shim)",
+  "main": "index.js",
+  "license": "MIT"
+}
