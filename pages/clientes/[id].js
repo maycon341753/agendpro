@@ -597,7 +597,7 @@ export default function ClienteDetalhePage() {
                   <TabsContent value="agendamentos">
                     {agendamentosList.length === 0 ? (
                       <EmptyState
-                        icon={CalendarDays}
+                        icon={<CalendarDays className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                         title="Sem agendamentos"
                         description="Este cliente ainda não possui agendamentos."
                       />
@@ -652,7 +652,7 @@ export default function ClienteDetalhePage() {
                   <TabsContent value="servicos">
                     {concluidoList.length === 0 ? (
                       <EmptyState
-                        icon={Scissors}
+                        icon={<Scissors className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                         title="Sem serviços realizados"
                         description="Os serviços concluídos aparecerão aqui."
                       />
@@ -707,7 +707,7 @@ export default function ClienteDetalhePage() {
                   <TabsContent value="cancelamentos">
                     {cancelamentosList.length === 0 ? (
                       <EmptyState
-                        icon={XCircle}
+                        icon={<XCircle className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                         title="Sem cancelamentos"
                         description="Nenhum agendamento foi cancelado ou não comparecido."
                       />
@@ -762,7 +762,7 @@ export default function ClienteDetalhePage() {
                   <TabsContent value="pagamentos">
                     {concluidoList.length === 0 ? (
                       <EmptyState
-                        icon={CreditCard}
+                        icon={<CreditCard className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                         title="Sem pagamentos"
                         description="Os pagamentos registrados aparecerão aqui."
                       />

@@ -29,6 +29,22 @@ const Button = React.forwardRef(function Button(
   },
   ref
 ) {
+  function resolveIconNode(source, sizeClass) {
+    if (source === null || source === undefined || source === false) return null;
+    if (typeof source === "function") {
+      const C = source;
+      return <C className={sizeClass || "h-4 w-4"} />;
+    }
+    if (
+      typeof source === "object" &&
+      source !== null &&
+      (source.$$typeof || React.isValidElement(source))
+    ) {
+      return source;
+    }
+    return null;
+  }
+
   const base = {
     base:
       "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-500 disabled:opacity-50 disabled:pointer-events-none",
@@ -58,16 +74,19 @@ const Button = React.forwardRef(function Button(
     className
   );
 
+  const leftIconNode = resolveIconNode(icon, "h-4 w-4");
+  const rightIconNode = resolveIconNode(iconRight, "h-4 w-4");
+
   const content = (
     <>
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        icon && <span className="inline-flex">{icon}</span>
+        leftIconNode && <span className="inline-flex">{leftIconNode}</span>
       )}
       {children}
-      {!loading && iconRight && (
-        <span className="inline-flex">{iconRight}</span>
+      {!loading && rightIconNode && (
+        <span className="inline-flex">{rightIconNode}</span>
       )}
     </>
   );

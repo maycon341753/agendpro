@@ -342,7 +342,7 @@ export default function BloqueiosPage() {
                 <SkeletonTable rows={5} cols={5} />
               ) : bloqueios.length === 0 ? (
                 <EmptyState
-                  icon={CalendarOff}
+                  icon={<CalendarOff className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                   title="Nenhum bloqueio encontrado"
                   description="Clique em 'Novo Bloqueio' para cadastrar feriados, férias ou manutenções."
                   action={{

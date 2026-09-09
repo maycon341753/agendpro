@@ -302,7 +302,7 @@ export default function AgendamentosPage() {
               <SkeletonTable rows={10} cols={10} />
             ) : appointments.length === 0 ? (
               <EmptyState
-                icon={CalendarCheck}
+                icon={<CalendarCheck className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                 title="Sem agendamentos"
                 description="Nenhum agendamento encontrado com os filtros selecionados."
                 action={{

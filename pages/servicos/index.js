@@ -171,7 +171,7 @@ export default function ServicosPage() {
             <SkeletonTable rows={5} cols={6} />
           ) : servicos.length === 0 ? (
             <EmptyState
-              icon={FolderOpen}
+              icon={<FolderOpen className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
               title="Nenhum serviço encontrado"
               description="Tente ajustar os filtros ou crie um novo serviço."
               action={{

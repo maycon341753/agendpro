@@ -679,7 +679,7 @@ export default function ConfiguracoesPage() {
                     <TableBody />
                   </Table>
                   <EmptyState
-                    icon={Users}
+                    icon={<Users className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                     title="Nenhum usuário cadastrado ainda."
                     description="Clique em 'Novo Usuário' para convidar alguém da equipe."
                   />

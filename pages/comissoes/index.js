@@ -133,7 +133,7 @@ export default function ComissoesPage() {
               <TableBody />
             </Table>
             <EmptyState
-              icon={Percent}
+              icon={<Percent className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
               title="Nenhuma comissão calculada ainda."
               description="As comissões serão exibidas aqui conforme os atendimentos forem concluídos."
             />

@@ -281,7 +281,7 @@ export default function SuperAdminPage() {
                     <TableBody />
                   </Table>
                   <EmptyState
-                    icon={Building2}
+                    icon={<Building2 className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                     title="Sem empresas para listar ainda."
                     description="As empresas aparecerão aqui assim que forem criadas."
                   />
@@ -395,7 +395,7 @@ export default function SuperAdminPage() {
                     <TableBody />
                   </Table>
                   <EmptyState
-                    icon={CreditCard}
+                    icon={<CreditCard className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                     title="Nenhuma assinatura listada."
                     description="As assinaturas ativas aparecerão aqui."
                   />
@@ -425,7 +425,7 @@ export default function SuperAdminPage() {
                     <TableBody />
                   </Table>
                   <EmptyState
-                    icon={Users}
+                    icon={<Users className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                     title="Sem usuários listados."
                     description="A lista completa aparecerá aqui."
                   />

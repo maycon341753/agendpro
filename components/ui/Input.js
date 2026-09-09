@@ -31,6 +31,25 @@ const Input = React.forwardRef(function Input(
   const generatedId = React.useId();
   const inputId = id || generatedId;
 
+  function resolveIconNode(source, sizeClass) {
+    if (source === null || source === undefined || source === false) return null;
+    if (typeof source === "function") {
+      const C = source;
+      return <C className={sizeClass || "h-4 w-4"} />;
+    }
+    if (
+      typeof source === "object" &&
+      source !== null &&
+      (source.$$typeof || React.isValidElement(source))
+    ) {
+      return source;
+    }
+    return null;
+  }
+
+  const leftIconNode = resolveIconNode(leftIcon, "h-4 w-4");
+  const rightIconNode = resolveIconNode(rightIcon, "h-4 w-4");
+
   return (
     <div className="w-full">
       {label && (
@@ -43,9 +62,9 @@ const Input = React.forwardRef(function Input(
         </label>
       )}
       <div className="relative">
-        {leftIcon && (
+        {leftIconNode && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-            {leftIcon}
+            {leftIconNode}
           </div>
         )}
         <input
@@ -54,8 +73,8 @@ const Input = React.forwardRef(function Input(
           type={type}
           className={cn(
             "input flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-0 transition-colors",
-            leftIcon ? "pl-10" : "",
-            rightIcon ? "pr-10" : "",
+            leftIconNode ? "pl-10" : "",
+            rightIconNode ? "pr-10" : "",
             error
               ? "border-red-500 focus-visible:ring-red-500"
               : "border-slate-300 hover:border-slate-400 focus-visible:border-brand-500",
@@ -67,9 +86,9 @@ const Input = React.forwardRef(function Input(
           }
           {...props}
         />
-        {rightIcon && (
+        {rightIconNode && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-            {rightIcon}
+            {rightIconNode}
           </div>
         )}
       </div>

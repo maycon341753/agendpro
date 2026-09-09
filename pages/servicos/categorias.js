@@ -196,7 +196,7 @@ export default function CategoriasPage() {
               <SkeletonTable rows={5} cols={4} />
             ) : categorias.length === 0 ? (
               <EmptyState
-                icon={FolderOpen}
+                icon={<FolderOpen className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                 title="Nenhuma categoria cadastrada"
                 description="Crie sua primeira categoria usando o formulário ao lado."
               />

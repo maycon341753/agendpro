@@ -4,6 +4,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/Toaster";
 
 export default function App({ Component, pageProps }) {
+  const getLayout =
+    Component.getLayout ||
+    ((page) => page);
+
   return (
     <>
       <Head>
@@ -15,7 +19,7 @@ export default function App({ Component, pageProps }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <AuthProvider>
-        <Component {...pageProps} />
+        {getLayout(<Component {...pageProps} />)}
         <Toaster />
       </AuthProvider>
     </>

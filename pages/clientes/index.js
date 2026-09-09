@@ -169,7 +169,7 @@ export default function ClientesPage() {
               <SkeletonTable rows={8} cols={8} />
             ) : clients.length === 0 ? (
               <EmptyState
-                icon={Users}
+                icon={<Users className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
                 title="Sem clientes cadastrados"
                 description="Cadastre seu primeiro cliente para começar a organizar o atendimento."
                 action={{

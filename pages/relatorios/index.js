@@ -230,7 +230,7 @@ export default function RelatoriosPage() {
           </CardHeader>
           <CardBody className="!pt-0">
             <EmptyState
-              icon={FileSpreadsheet}
+              icon={<FileSpreadsheet className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
               title="Nenhum dado para exibir ainda."
               description="Selecione um período e o relatório desejado para carregar as informações."
               action={{

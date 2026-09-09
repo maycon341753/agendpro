@@ -170,7 +170,7 @@ export default function ProfissionaisPage() {
             <SkeletonTable rows={5} cols={7} />
           ) : profissionais.length === 0 ? (
             <EmptyState
-              icon={FolderOpen}
+              icon={<FolderOpen className="h-8 w-8 text-slate-400" strokeWidth={1.5} />}
               title="Nenhum profissional encontrado"
               description="Tente ajustar os filtros ou cadastre um novo profissional."
               action={{
