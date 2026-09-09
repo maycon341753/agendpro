@@ -182,8 +182,14 @@ const CUSTOM_SHIMS = {
       "  return /^.*$/;\n" +
       "};\n" +
       "picomatch.toRegex = picomatch.makeRe;\n" +
-      "picomatch.parse = function () { return {}; };\n" +
-      "picomatch.scan = function () { return {}; };\n" +
+      "picomatch.parse = function (pattern, options) {\n" +
+      "  if (typeof pattern !== 'string') pattern = '';\n" +
+      "  return { input: pattern, prefix: '', start: 0, base: '', glob: pattern, slashes: [], parts: [], tokens: [], isBrace: false, isBracket: false, isGlob: /[*?{}[\\]]/.test(pattern), isExtglob: false, isGlobstar: /\\*\\*/.test(pattern) };\n" +
+      "};\n" +
+      "picomatch.scan = function (input, options) {\n" +
+      "  if (typeof input !== 'string') input = '';\n" +
+      "  return { input: input, start: 0, base: input, prefix: '', glob: input, isGlob: /[*?{}[\\]]/.test(input), isBrace: false, isBracket: false, isGlobstar: /\\*\\*/.test(input), isExtglob: false, slashes: [], parts: input.split('/'), tokens: [] };\n" +
+      "};\n" +
       "picomatch.default = picomatch;\n" +
       "module.exports = picomatch;\n" +
       "module.exports.default = picomatch;\n",
@@ -204,8 +210,14 @@ const CUSTOM_SHIMS = {
       "  picomatch.test = function (s, g, o) { try { return picomatch(g, o)(s); } catch (e) { return true; } };\n" +
       "  picomatch.matchBase = function (b, g, o) { try { return picomatch(g, o)(b); } catch (e) { return true; } };\n" +
       "  picomatch.isMatch = picomatch.test;\n" +
-      "  picomatch.parse = function () { return {}; };\n" +
-      "  picomatch.scan = function () { return {}; };\n" +
+      "  picomatch.parse = function (pattern, options) {\n" +
+      "    if (typeof pattern !== 'string') pattern = '';\n" +
+      "    return { input: pattern, prefix: '', start: 0, base: '', glob: pattern, slashes: [], parts: [], tokens: [], isBrace: false, isBracket: false, isGlob: /[*?{}[\\]]/.test(pattern), isExtglob: false, isGlobstar: /\\*\\*/.test(pattern) };\n" +
+      "  };\n" +
+      "  picomatch.scan = function (input, options) {\n" +
+      "    if (typeof input !== 'string') input = '';\n" +
+      "    return { input: input, start: 0, base: input, prefix: '', glob: input, isGlob: /[*?{}[\\]]/.test(input), isBrace: false, isBracket: false, isGlobstar: /\\*\\*/.test(input), isExtglob: false, slashes: [], parts: input.split('/'), tokens: [] };\n" +
+      "  };\n" +
       "  picomatch.toRegex = function () { return /^.*$/; };\n" +
       "}\n" +
       "try { braces = require('braces'); } catch (e) {\n" +
@@ -291,13 +303,92 @@ const CUSTOM_SHIMS = {
       "  return [str];\n" +
       "};\n" +
       "micromatch.array = function array(arr, patterns, options) { return micromatch(arr, patterns, options); };\n" +
-      "micromatch.parse = function parse() { return {}; };\n" +
-      "micromatch.scan = function scan() { return {}; };\n" +
+      "micromatch.parse = function parse(pattern, options) {\n" +
+      "  if (typeof pattern !== 'string') pattern = '';\n" +
+      "  return { input: pattern, prefix: '', start: 0, base: '', glob: pattern, slashes: [], parts: [], tokens: [], isBrace: false, isBracket: false, isGlob: /[*?{}[\\]]/.test(pattern), isExtglob: false, isGlobstar: /\\*\\*/.test(pattern) };\n" +
+      "};\n" +
+      "micromatch.scan = function scan(input, options) {\n" +
+      "  if (typeof input !== 'string') input = '';\n" +
+      "  return { input: input, start: 0, base: input, prefix: '', glob: input, isGlob: /[*?{}[\\]]/.test(input), isBrace: false, isBracket: false, isGlobstar: /\\*\\*/.test(input), isExtglob: false, slashes: [], parts: input.split('/'), tokens: [] };\n" +
+      "};\n" +
       "micromatch.braces = braces;\n" +
       "micromatch.picomatch = picomatch;\n" +
       "micromatch.default = micromatch;\n" +
       "module.exports = micromatch;\n" +
       "module.exports.default = micromatch;\n",
+  },
+  "fast-glob": {
+    "package.json": makePackageJson("fast-glob", "3.3.2", { dependencies: { "glob-parent": "^6.0.2", micromatch: "^4.0.4", braces: "^3.0.2" }, engines: { node: ">=8.6" } }),
+    "index.js":
+      "'use strict';\n" +
+      "var fs; var path;\n" +
+      "try { fs = require('fs'); } catch (e) {}\n" +
+      "try { path = require('path'); } catch (e) {}\n" +
+      "function walkDir(dir, results, seen, options, depth) {\n" +
+      "  if (depth > 10) return;\n" +
+      "  try {\n" +
+      "    var entries = fs.readdirSync(dir, { withFileTypes: true });\n" +
+      "    for (var i = 0; i < entries.length; i++) {\n" +
+      "      var entry = entries[i]; var full = path ? path.join(dir, entry.name) : dir + '/' + entry.name;\n" +
+      "      if (seen[full]) continue; seen[full] = true;\n" +
+      "      try {\n" +
+      "        if (entry.isDirectory()) {\n" +
+      "          if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === '.next' || entry.name === 'dist' || entry.name === 'build') continue;\n" +
+      "          walkDir(full, results, seen, options, depth + 1);\n" +
+      "        } else if (entry.isFile()) {\n" +
+      "          var extOk = /\\.(js|jsx|ts|tsx|mdx|md|html|css)$/i.test(entry.name);\n" +
+      "          if (extOk || (options && options.dot)) results.push(full);\n" +
+      "        }\n" +
+      "      } catch (e) {}\n" +
+      "    }\n" +
+      "  } catch (e) {}\n" +
+      "}\n" +
+      "function fastGlobSync(patterns, options) {\n" +
+      "  if (!patterns) return []; if (!Array.isArray(patterns)) patterns = [patterns];\n" +
+      "  options = options || {}; var results = []; var seen = {};\n" +
+      "  var cwd = options.cwd || process.cwd();\n" +
+      "  for (var pi = 0; pi < patterns.length; pi++) {\n" +
+      "    var p = patterns[pi]; if (typeof p !== 'string') continue;\n" +
+      "    if (p[0] === '!') continue;\n" +
+      "    try { var parentDir = cwd; if (path && typeof path.dirname === 'function') { try { parentDir = path.resolve(cwd, p.split('*')[0].split('?')[0].split('{')[0].replace(/[^/\\\\]+$/, '') || '.'); } catch (e) {} } if (fs && typeof fs.readdirSync === 'function') walkDir(parentDir, results, seen, options, 0); } catch (e) {}\n" +
+      "  }\n" +
+      "  return results;\n" +
+      "}\n" +
+      "function fastGlob(patterns, options) { return Promise.resolve(fastGlobSync(patterns, options)); }\n" +
+      "fastGlob.sync = fastGlobSync; fastGlob.async = fastGlob;\n" +
+      "fastGlob.stream = function () {\n" +
+      "  var Readable; try { Readable = require('stream').Readable; } catch (e) {}\n" +
+      "  if (!Readable) return { on: function () { return this; }, pipe: function () { return this; } };\n" +
+      "  return new Readable({ objectMode: true, read: function () { this.push(null); } });\n" +
+      "};\n" +
+      "fastGlob.generate = function () { return []; };\n" +
+      "fastGlob.escapePath = function (p) { return String(p || ''); };\n" +
+      "fastGlob.default = fastGlob;\n" +
+      "module.exports = fastGlob; module.exports.default = fastGlob; module.exports.sync = fastGlobSync; module.exports.async = fastGlob;\n",
+  },
+  "glob-parent": {
+    "package.json": makePackageJson("glob-parent", "6.0.2", { engines: { node: ">=10.13.0" } }),
+    "index.js":
+      "'use strict';\n" +
+      "var path; try { path = require('path'); } catch (e) {}\n" +
+      "function globParent(pattern, options) {\n" +
+      "  if (typeof pattern !== 'string') return '';\n" +
+      "  options = options || {};\n" +
+      "  var cleaned = pattern;\n" +
+      "  if (options.flipBackslashes !== false) cleaned = cleaned.replace(/\\\\/g, '/');\n" +
+      "  var idx = -1; var globChars = ['*', '?', '{', '[', '('];\n" +
+      "  for (var i = 0; i < cleaned.length; i++) { if (globChars.indexOf(cleaned[i]) !== -1) { idx = i; break; } }\n" +
+      "  var base = (idx === -1) ? cleaned : cleaned.slice(0, idx);\n" +
+      "  var lastSlash = -1;\n" +
+      "  for (var j = base.length - 1; j >= 0; j--) { if (base[j] === '/' || base[j] === '\\\\') { lastSlash = j; break; } }\n" +
+      "  var result = (lastSlash === -1) ? '' : base.slice(0, lastSlash);\n" +
+      "  if (result === '' && (pattern[0] === '/' || pattern[0] === '\\\\')) result = '/';\n" +
+      "  return result;\n" +
+      "}\n" +
+      "globParent.default = globParent;\n" +
+      "globParent.isGlob = function (pattern) { if (typeof pattern !== 'string') return false; return /[*?{[\\]()]/.test(pattern); };\n" +
+      "globParent.globParent = globParent;\n" +
+      "module.exports = globParent; module.exports.default = globParent;\n",
   },
   "node-exports-info": {
     "package.json": makePackageJson("node-exports-info", "1.2.3"),
@@ -411,8 +502,6 @@ const GENERIC_NAMES = [
   "is-bigint",
   "is-boolean-object",
   "is-number-object",
-  "glob-parent",
-  "fast-glob",
   "merge2",
   "@nodelib/fs.stat",
   "@nodelib/fs.scandir",

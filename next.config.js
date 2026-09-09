@@ -65,6 +65,8 @@ const nextConfig = {
     config.resolve.alias["micromatch"] = path.resolve(__dirname, "shims/micromatch/index.js");
     config.resolve.alias["node-exports-info"] = path.resolve(__dirname, "shims/node-exports-info/index.js");
     config.resolve.alias["callsites"] = path.resolve(__dirname, "shims/callsites/index.js");
+    config.resolve.alias["fast-glob"] = path.resolve(__dirname, "shims/fast-glob/index.js");
+    config.resolve.alias["glob-parent"] = path.resolve(__dirname, "shims/glob-parent/index.js");
     return config;
   },
 

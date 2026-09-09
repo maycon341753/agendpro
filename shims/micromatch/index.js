@@ -128,8 +128,42 @@ micromatch.array = function array(arr, patterns, options) {
   return micromatch(arr, patterns, options);
 };
 
-micromatch.parse = function parse() { return {}; };
-micromatch.scan = function scan() { return {}; };
+micromatch.parse = function parse(pattern, options) {
+  if (typeof pattern !== 'string') pattern = '';
+  return {
+    input: pattern,
+    prefix: '',
+    start: 0,
+    base: '',
+    glob: pattern,
+    slashes: [],
+    parts: [],
+    tokens: [],
+    isBrace: false,
+    isBracket: false,
+    isGlob: /[*?{}[\]]/.test(pattern),
+    isExtglob: false,
+    isGlobstar: /\*\*/.test(pattern),
+  };
+};
+micromatch.scan = function scan(input, options) {
+  if (typeof input !== 'string') input = '';
+  return {
+    input: input,
+    start: 0,
+    base: input,
+    prefix: '',
+    glob: input,
+    isGlob: /[*?{}[\]]/.test(input),
+    isBrace: false,
+    isBracket: false,
+    isGlobstar: /\*\*/.test(input),
+    isExtglob: false,
+    slashes: [],
+    parts: input.split('/'),
+    tokens: [],
+  };
+};
 micromatch.braces = braces;
 micromatch.picomatch = picomatch;
 micromatch.default = micromatch;

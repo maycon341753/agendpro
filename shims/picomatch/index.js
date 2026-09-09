@@ -34,8 +34,42 @@ picomatch.makeRe = function makeRe(pattern, options) {
 
 picomatch.toRegex = picomatch.makeRe;
 
-picomatch.parse = function () { return {}; };
-picomatch.scan = function () { return {}; };
+picomatch.parse = function (pattern, options) {
+  if (typeof pattern !== 'string') pattern = '';
+  return {
+    input: pattern,
+    prefix: '',
+    start: 0,
+    base: '',
+    glob: pattern,
+    slashes: [],
+    parts: [],
+    tokens: [],
+    isBrace: false,
+    isBracket: false,
+    isGlob: /[*?{}[\]]/.test(pattern),
+    isExtglob: false,
+    isGlobstar: /\*\*/.test(pattern),
+  };
+};
+picomatch.scan = function (input, options) {
+  if (typeof input !== 'string') input = '';
+  return {
+    input: input,
+    start: 0,
+    base: input,
+    prefix: '',
+    glob: input,
+    isGlob: /[*?{}[\]]/.test(input),
+    isBrace: false,
+    isBracket: false,
+    isGlobstar: /\*\*/.test(input),
+    isExtglob: false,
+    slashes: [],
+    parts: input.split('/'),
+    tokens: [],
+  };
+};
 
 picomatch.default = picomatch;
 
