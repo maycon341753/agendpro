@@ -364,11 +364,12 @@ const CUSTOM_SHIMS = {
       "fastGlob.generate = function () { return []; };\n" +
       "fastGlob.generateTasks = function (patterns, options) {\n" +
       "  if (!patterns) return []; if (!Array.isArray(patterns)) patterns = [patterns]; options = options || {};\n" +
-      "  var tasks = []; var positive = []; var negative = [];\n" +
+      "  var cwd = options.cwd || process.cwd(); var tasks = []; var positive = []; var negative = [];\n" +
       "  for (var i = 0; i < patterns.length; i++) { var p = patterns[i]; if (typeof p !== 'string') continue; if (p[0] === '!') negative.push(p.slice(1)); else positive.push(p); }\n" +
       "  if (positive.length === 0 && patterns.length > 0) { positive.push('**/*'); }\n" +
       "  for (var j = 0; j < positive.length; j++) {\n" +
-      "    tasks.push({ pattern: positive[j], patterns: [positive[j]], negative: negative.slice(), options: Object.assign({}, options, { cwd: options.cwd || process.cwd() }), base: options.cwd || process.cwd(), dynamic: true });\n" +
+      "    var pat = positive[j];\n" +
+      "    tasks.push({ pattern: pat, patterns: [pat], positive: [pat], negative: negative.slice(), options: Object.assign({}, options, { cwd: cwd, ignore: Array.isArray(options.ignore) ? options.ignore : [], extensions: Array.isArray(options.extensions) ? options.extensions : [], caseSensitiveMatch: options.caseSensitiveMatch !== false }), base: cwd, dynamic: true, entries: [], parts: [], segments: [], results: [], files: [], dirs: [] });\n" +
       "  }\n" +
       "  return tasks;\n" +
       "};\n" +

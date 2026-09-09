@@ -69,6 +69,7 @@ fastGlob.generateTasks = function (patterns, options) {
   if (!patterns) return [];
   if (!Array.isArray(patterns)) patterns = [patterns];
   options = options || {};
+  var cwd = options.cwd || process.cwd();
   var tasks = [];
   var positive = [];
   var negative = [];
@@ -79,16 +80,29 @@ fastGlob.generateTasks = function (patterns, options) {
     else positive.push(p);
   }
   if (positive.length === 0 && patterns.length > 0) {
-    try { positive.push('**/*'); } catch (e) { positive = ['**/*']; }
+    positive.push('**/*');
   }
   for (var j = 0; j < positive.length; j++) {
+    var pat = positive[j];
     tasks.push({
-      pattern: positive[j],
-      patterns: [positive[j]],
+      pattern: pat,
+      patterns: [pat],
+      positive: [pat],
       negative: negative.slice(),
-      options: Object.assign({}, options, { cwd: options.cwd || process.cwd() }),
-      base: options.cwd || process.cwd(),
+      options: Object.assign({}, options, {
+        cwd: cwd,
+        ignore: Array.isArray(options.ignore) ? options.ignore : [],
+        extensions: Array.isArray(options.extensions) ? options.extensions : [],
+        caseSensitiveMatch: options.caseSensitiveMatch !== false,
+      }),
+      base: cwd,
       dynamic: true,
+      entries: [],
+      parts: [],
+      segments: [],
+      results: [],
+      files: [],
+      dirs: [],
     });
   }
   return tasks;
