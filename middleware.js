@@ -103,9 +103,7 @@ export function middleware(request) {
 
   if (isProtected(pathname) && !isPublic(pathname)) {
     if (!hasAccessToken(request)) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
+      console.warn(`[MIDDELWARE] Rota ${pathname} exige auth mas cookie 'sb-access-token' nao encontrado (Supabase por padrão usa localStorage). Permitindo request, as paginas tem guards client-side proprios.`);
     }
   }
 

@@ -128,20 +128,85 @@ const presetColors = [
 
 export default function SetupPage() {
   const router = useRouter();
-  const { user, initialized, loading, companies } = useAuth();
+  const { user, initialized, loading, company, companies } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
-    if (initialized && !user) {
-      router.replace("/login");
+    let cancelled = false;
+    let timerId = null;
+    console.log("[SetupPage] useEffect guard: estado atual:", {
+      initialized,
+      loading,
+      hasUser: !!user,
+      hasCompany: !!company,
+      companiesCount: Array.isArray(companies) ? companies.length : 0,
+    });
+    if (!initialized || loading) {
       return;
     }
-    if (initialized && companies && companies.length > 0) {
-      router.replace("/dashboard");
+    if (user) {
+      if (company) {
+        timerId = setTimeout(() => {
+          if (cancelled) return;
+          try {
+            const agora = Date.now();
+            if (agora < (window.__redirectBloqueadoAte || 0)) {
+              console.log("[SetupPage] ANTI-LOOP GLOBAL: redirects bloqueados. Ignorar setup→dashboard.");
+              return;
+            }
+            window.__ultimoRedirectAuth = { from: "/setup", to: "/dashboard", ts: agora };
+            window.__redirectBloqueadoAte = agora + 2500;
+          } catch (_) {}
+          console.log("[SetupPage] guard: TEM empresa → /dashboard (push, não replace)");
+          router.push("/dashboard");
+        }, 400);
+        return () => { cancelled = true; if (timerId) clearTimeout(timerId); };
+      } else {
+        console.log("[SetupPage] guard: user AUTENTICADO SEM empresa → PERMANECE em /setup. Fluxo correto!");
+        return;
+      }
     }
-  }, [initialized, user, companies, router]);
+    if (!user) {
+      console.log("[SetupPage] guard: user=null no React, verificando sessão real e esperando +2.5s para sincronizar...");
+      timerId = setTimeout(async () => {
+        if (cancelled) return;
+        try {
+          const agora = Date.now();
+          if (agora < (window.__redirectBloqueadoAte || 0)) {
+            console.log("[SetupPage] ANTI-LOOP GLOBAL: redirects bloqueados. Ignorar setup→login.");
+            return;
+          }
+          const ultimo = window.__ultimoRedirectAuth || null;
+          if (ultimo && ultimo.from === "/login" && ultimo.to === "/setup" && (agora - ultimo.ts) < 3000) {
+            console.log("[SetupPage] ANTI-LOOP: login→setup disparou há", agora - ultimo.ts, "ms → user ainda null no React, mas esperar +sincronia ao invés de voltar pro login.");
+            return;
+          }
+        } catch (_) {}
+        let sessaoRealExiste = false;
+        try {
+          if (supabase && supabase.auth && typeof supabase.auth.getSession === "function") {
+            const { data: { session: sessaoReal } } = await supabase.auth.getSession();
+            sessaoRealExiste = !!sessaoReal?.user;
+          }
+        } catch (_) { sessaoRealExiste = false; }
+        if (sessaoRealExiste) {
+          console.log("[SetupPage] guard: SESSAO EXISTE no storage mas user=null no React → SEM REDIRECT, aguarda AuthProvider sincronizar.");
+          return;
+        }
+        const qs = new URLSearchParams({ redirect: "/setup" }).toString();
+        console.log("[SetupPage] guard: CONFIRMADO sessão ausente → /login?" + qs);
+        try {
+          const agora = Date.now();
+          window.__ultimoRedirectAuth = { from: "/setup", to: "/login", ts: agora };
+          window.__redirectBloqueadoAte = agora + 3000;
+        } catch (_) {}
+        router.push(`/login?${qs}`);
+      }, 2500);
+      return () => { cancelled = true; if (timerId) clearTimeout(timerId); };
+    }
+  }, [initialized, loading, user, company, companies]);
 
   const schemaByStep = {
     1: schemaStep1,

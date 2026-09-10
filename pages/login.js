@@ -16,7 +16,7 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const { redirect } = router.query;
-  const { signInWithPassword, user, loading, initialized } = useAuth();
+  const { signInWithPassword, user, loading, initialized, company } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -33,19 +33,78 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (initialized && user) {
-      router.replace(redirect ? String(redirect) : "/dashboard");
+    console.log("[LoginPage] useEffect redirect: estado atual:", {
+      initialized,
+      loading,
+      hasUser: !!user,
+      hasCompany: !!company,
+      redirect: redirect ? String(redirect) : null,
+    });
+    if (!(initialized && !loading && user)) {
+      return;
     }
-  }, [user, initialized, router, redirect]);
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      try {
+        const agora = Date.now();
+        const bloqueioGlobal = window.__redirectBloqueadoAte || 0;
+        if (agora < bloqueioGlobal) {
+          console.log("[LoginPage] ANTI-LOOP GLOBAL: redirects BLOQUEADOS por", (bloqueioGlobal - agora), "ms. Ignorar.");
+          return;
+        }
+        const ultimo = window.__ultimoRedirectAuth || null;
+        if (ultimo && ultimo.from === "/setup" && ultimo.to === "/login" && (agora - ultimo.ts) < 2500) {
+          console.log("[LoginPage] ANTI-LOOP: setup→login disparou há", agora - ultimo.ts, "ms → IGNORAR login→setup para evitar ping-pong.", ultimo);
+          return;
+        }
+        if (ultimo && ultimo.from === "/login" && (agora - ultimo.ts) < 2500) {
+          console.log("[LoginPage] ANTI-LOOP: login já disparou redirect nos últimos 2.5s → IGNORAR duplicado.");
+          return;
+        }
+      } catch (_) {}
+      const redirectStr = redirect ? String(redirect) : null;
+      const isSafeRedirect = redirectStr && redirectStr.startsWith("/") && !redirectStr.startsWith("//");
+      const isSetupOrLogin = redirectStr === "/setup" || redirectStr === "/login" || !!(redirectStr && redirectStr.startsWith("/login?"));
+
+      let destino;
+      if (!company) {
+        destino = "/setup";
+        console.log("[LoginPage] useEffect redirect (debounced) → SEM EMPRESA → /setup");
+      } else {
+        if (isSafeRedirect && !isSetupOrLogin) {
+          destino = redirectStr;
+          console.log("[LoginPage] useEffect redirect (debounced) → COM EMPRESA → redirect seguro:", destino);
+        } else {
+          destino = "/dashboard";
+          console.log("[LoginPage] useEffect redirect (debounced) → COM EMPRESA → padrão /dashboard");
+        }
+      }
+      try {
+        const agora = Date.now();
+        window.__ultimoRedirectAuth = { from: "/login", to: destino, ts: agora };
+        window.__redirectBloqueadoAte = agora + 2500;
+      } catch (_) {}
+      console.log("[LoginPage] useEffect redirect (debounced) → DESTINO FINAL:", destino);
+      router.push(destino);
+    }, 800);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [user, initialized, loading, company, redirect]);
 
   const onSubmit = async (data) => {
     try {
       setSubmitting(true);
-      await signInWithPassword(data.email, data.password);
-      toastSuccess("Login realizado com sucesso!");
-      router.replace(redirect ? String(redirect) : "/dashboard");
+      console.log("[LoginPage] onSubmit: iniciando signInWithPassword com email:", data.email);
+      const authData = await signInWithPassword(data.email, data.password);
+      const temEmpresa = !!authData?.company;
+      toastSuccess(
+        !temEmpresa
+          ? "Login realizado com sucesso! Vamos configurar sua empresa (setup)."
+          : "Login realizado com sucesso!"
+      );
+      console.log("[LoginPage] onSubmit: signIn SUCESSO. authData.company =", authData?.company?.name || null, "| temEmpresa =", temEmpresa, "| Aguardando useEffect redirect ser disparado.");
     } catch (error) {
-      console.error("Erro no login:", error);
+      console.error("[LoginPage] onSubmit: ERRO no login:", error);
       let msg = "Erro ao fazer login. Tente novamente.";
       if (error.message?.includes("Invalid login credentials")) {
         msg = "E-mail ou senha incorretos.";

@@ -508,17 +508,75 @@ function Topbar({ onToggleSidebar, onToggleMobile }) {
 }
 
 export default function AdminLayout({ children }) {
-  const { user, loading, initialized } = useAuth();
+  const { user, loading, initialized, company } = useAuth();
   const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    let timerId = null;
     if (!initialized || loading) return;
-    if (!user) {
-      router.replace("/login");
-    }
-  }, [initialized, loading, user, router]);
+    const pathnameAtual = router.pathname;
+    timerId = setTimeout(async () => {
+      if (cancelled) return;
+      try {
+        const agora = Date.now();
+        if (agora < (window.__redirectBloqueadoAte || 0)) {
+          console.log("[AdminLayout] ANTI-LOOP GLOBAL: redirects bloqueados por", (window.__redirectBloqueadoAte - agora), "ms. Ignorar guard.");
+          return;
+        }
+      } catch (_) {}
+      if (user) {
+        if (!company && pathnameAtual !== "/setup") {
+          try {
+            const agora = Date.now();
+            const ultimo = window.__ultimoRedirectAuth || null;
+            if (ultimo && ultimo.to === "/setup" && (agora - ultimo.ts) < 2500) {
+              console.log("[AdminLayout] ANTI-LOOP: redirect para /setup recente, IGNORAR AdminLayout→setup por", 2500 - (agora - ultimo.ts), "ms.");
+              return;
+            }
+            window.__ultimoRedirectAuth = { from: pathnameAtual, to: "/setup", ts: agora };
+            window.__redirectBloqueadoAte = agora + 2500;
+          } catch (_) {}
+          console.log("[AdminLayout] guard (debounced): user SEM empresa, pathname=", pathnameAtual, " → /setup");
+          router.push("/setup");
+        }
+        return;
+      }
+      if (!user) {
+        try {
+          const agora = Date.now();
+          const ultimo = window.__ultimoRedirectAuth || null;
+          if (ultimo && ultimo.to === pathnameAtual && (agora - ultimo.ts) < 3000) {
+            console.log("[AdminLayout] ANTI-LOOP: redirect para a pagina recente, IGNORAR AdminLayout→login por pouco tempo.");
+            return;
+          }
+        } catch (_) {}
+        console.log("[AdminLayout] guard (debounced): user=null no React. Checando sessão real via getSession.");
+        let sessaoRealExiste = false;
+        try {
+          const { supabase } = await import("@/lib/supabaseClient");
+          if (supabase && supabase.auth && typeof supabase.auth.getSession === "function") {
+            const { data: { session: sessaoReal } } = await supabase.auth.getSession();
+            sessaoRealExiste = !!sessaoReal?.user;
+          }
+        } catch (_) { sessaoRealExiste = false; }
+        if (sessaoRealExiste) {
+          console.log("[AdminLayout] guard (debounced): SESSAO EXISTE no storage, user=null no React → Aguardar sincronia. SEM REDIRECT.");
+          return;
+        }
+        console.log("[AdminLayout] guard (debounced): CONFIRMADO sem sessão → /login");
+        try {
+          const agora = Date.now();
+          window.__ultimoRedirectAuth = { from: pathnameAtual, to: "/login", ts: agora };
+          window.__redirectBloqueadoAte = agora + 3000;
+        } catch (_) {}
+        router.push("/login");
+      }
+    }, 500);
+    return () => { cancelled = true; if (timerId) clearTimeout(timerId); };
+  }, [initialized, loading, user, company, router.pathname]);
 
   if (loading || !initialized || !user) {
     return (
